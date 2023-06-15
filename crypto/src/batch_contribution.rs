@@ -9,6 +9,8 @@ use secrecy::{ExposeSecret, Secret};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
+use kzg_ceremony_prover::serialization::{BatchContribution as BC, Contribution as C, PowersOfTau};
+
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct BatchContribution {
@@ -54,6 +56,41 @@ impl BatchContribution {
                         .map_err(|e| CeremoniesError::InvalidCeremony(i, e))
                 });
         res
+    }
+
+    #[cfg(feature = "halo2")]
+    pub fn to_bc(&self) -> BC {
+        let contributions = self
+            .contributions
+            .par_iter()
+            .map(|original| {
+                let g1_powers = original
+                    .powers
+                    .g1
+                    .par_iter()
+                    .map(|p| p.to_point())
+                    .collect::<Vec<_>>();
+
+                let g2_powers = original
+                    .powers
+                    .g2
+                    .par_iter()
+                    .map(|p| p.to_point())
+                    .collect::<Vec<_>>();
+
+                C {
+                    num_g1_powers: g1_powers.len() as u32,
+                    num_g2_powers: g2_powers.len() as u32,
+                    powers_of_tau: PowersOfTau {
+                        g1_powers,
+                        g2_powers,
+                    },
+                    pot_pubkey:    original.pot_pubkey.to_point(),
+                }
+            })
+            .collect();
+
+        BC { contributions }
     }
 }
 

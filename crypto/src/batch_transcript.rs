@@ -1,3 +1,5 @@
+#[cfg(feature = "halo2")]
+use crate::halo2_verifier::verify_halo2_proofs;
 use crate::{
     signature::{identity::Identity, ContributionTypedData, EcdsaSignature},
     BatchContribution, CeremoniesError, Engine, Transcript,
@@ -74,6 +76,56 @@ impl BatchTranscript {
                     .verify::<E>(contribution)
                     .map_err(|e| CeremoniesError::InvalidCeremony(i, e))
             })?;
+
+        self.participant_ecdsa_signatures.push(
+            contribution
+                .ecdsa_signature
+                .prune(&identity, &ContributionTypedData::from(&contribution)),
+        );
+
+        // Prune BLS Signatures
+        contribution.contributions.iter_mut().for_each(|c| {
+            c.bls_signature = c
+                .bls_signature
+                .prune::<E>(identity.to_string().as_bytes(), c.pot_pubkey);
+        });
+
+        // Add contributions
+        for (transcript, contribution) in self
+            .transcripts
+            .iter_mut()
+            .zip(contribution.contributions.into_iter())
+        {
+            transcript.add(contribution);
+        }
+
+        self.participant_ids.push(identity);
+
+        Ok(())
+    }
+
+    /// Adds a batch contribution to the transcript. The contribution must be
+    /// valid. This would be verified by halo2 proof.
+    #[instrument(level = "info", skip_all, fields(n=contribution.contributions.len()))]
+    #[cfg(feature = "halo2")]
+    pub fn verify_halo2_add<E: Engine>(
+        &mut self,
+        mut contribution: BatchContribution,
+        proof: String,
+        identity: Identity,
+    ) -> Result<(), CeremoniesError> {
+        // Verify contribution count
+        if self.transcripts.len() != contribution.contributions.len() {
+            return Err(CeremoniesError::UnexpectedNumContributions(
+                self.transcripts.len(),
+                contribution.contributions.len(),
+            ));
+        }
+
+        // Verify contributions in parallel
+        let old_contribution = self.contribution().to_bc();
+        let new_contribution = contribution.to_bc();
+        verify_halo2_proofs(old_contribution, new_contribution, proof);
 
         self.participant_ecdsa_signatures.push(
             contribution

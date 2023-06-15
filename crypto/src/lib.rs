@@ -9,6 +9,8 @@ mod contribution;
 mod engine;
 mod error;
 mod group;
+#[cfg(feature = "halo2")]
+mod halo2_verifier;
 mod hex_format;
 mod powers;
 pub mod signature;

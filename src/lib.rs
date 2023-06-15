@@ -3,6 +3,8 @@
 #![cfg_attr(any(test, feature = "bench"), allow(clippy::wildcard_imports))]
 #![allow(clippy::module_name_repetitions)]
 
+#[cfg(feature = "halo2")]
+use crate::api::v1::contribute_with_halo2::contribute_with_halo2;
 use crate::{
     api::v1::{
         auth::{auth_client_link, eth_callback, github_callback},
@@ -146,28 +148,54 @@ pub async fn start_server(
         options.lobby.clone(),
     ));
 
-    let app = Router::new()
-        .route("/auth/request_link", get(auth_client_link))
-        .route("/auth/callback/github", get(github_callback))
-        .route("/auth/callback/eth", get(eth_callback))
-        .route("/lobby/try_contribute", post(try_contribute))
-        .route("/contribute", post(contribute))
-        .route("/contribute/abort", post(contribute_abort))
-        .route("/info/status", get(status))
-        .route("/info/current_state", get(current_state))
-        .layer(CorsLayer::permissive())
-        .layer(Extension(lobby_state))
-        .layer(Extension(auth_state))
-        .layer(Extension(ceremony_status))
-        .layer(Extension(keys))
-        .layer(Extension(eth_oauth_client(&options.ethereum)))
-        .layer(Extension(github_oauth_client(&options.github)))
-        .layer(Extension(reqwest::Client::new()))
-        .layer(Extension(storage_client(&options.storage).await?))
-        .layer(Extension(transcript))
-        .layer(Extension(options.clone()))
-        .layer(DefaultBodyLimit::disable())
-        .layer(RequestBodyLimitLayer::new(MAX_CONTRIBUTION_SIZE));
+    let app = if cfg!(feature = "halo2") {
+        Router::new()
+            .route("/auth/request_link", get(auth_client_link))
+            .route("/auth/callback/github", get(github_callback))
+            .route("/auth/callback/eth", get(eth_callback))
+            .route("/lobby/try_contribute", post(try_contribute))
+            .route("/contribute", post(contribute))
+            .route("/contribute_with_halo2", post(contribute_with_halo2))
+            .route("/contribute/abort", post(contribute_abort))
+            .route("/info/status", get(status))
+            .route("/info/current_state", get(current_state))
+            .layer(CorsLayer::permissive())
+            .layer(Extension(lobby_state))
+            .layer(Extension(auth_state))
+            .layer(Extension(ceremony_status))
+            .layer(Extension(keys))
+            .layer(Extension(eth_oauth_client(&options.ethereum)))
+            .layer(Extension(github_oauth_client(&options.github)))
+            .layer(Extension(reqwest::Client::new()))
+            .layer(Extension(storage_client(&options.storage).await?))
+            .layer(Extension(transcript))
+            .layer(Extension(options.clone()))
+            .layer(DefaultBodyLimit::disable())
+            .layer(RequestBodyLimitLayer::new(MAX_CONTRIBUTION_SIZE))
+    } else {
+        Router::new()
+            .route("/auth/request_link", get(auth_client_link))
+            .route("/auth/callback/github", get(github_callback))
+            .route("/auth/callback/eth", get(eth_callback))
+            .route("/lobby/try_contribute", post(try_contribute))
+            .route("/contribute", post(contribute))
+            .route("/contribute/abort", post(contribute_abort))
+            .route("/info/status", get(status))
+            .route("/info/current_state", get(current_state))
+            .layer(CorsLayer::permissive())
+            .layer(Extension(lobby_state))
+            .layer(Extension(auth_state))
+            .layer(Extension(ceremony_status))
+            .layer(Extension(keys))
+            .layer(Extension(eth_oauth_client(&options.ethereum)))
+            .layer(Extension(github_oauth_client(&options.github)))
+            .layer(Extension(reqwest::Client::new()))
+            .layer(Extension(storage_client(&options.storage).await?))
+            .layer(Extension(transcript))
+            .layer(Extension(options.clone()))
+            .layer(DefaultBodyLimit::disable())
+            .layer(RequestBodyLimitLayer::new(MAX_CONTRIBUTION_SIZE))
+    };
 
     // Run the server
     let (addr, prefix) = parse_url(&options.server)?;

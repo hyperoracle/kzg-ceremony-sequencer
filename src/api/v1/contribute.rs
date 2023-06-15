@@ -22,8 +22,8 @@ use tracing::error;
 
 #[derive(Serialize)]
 pub struct ContributeReceipt {
-    receipt:   String,
-    signature: Signature,
+    pub(crate) receipt:   String,
+    pub(crate) signature: Signature,
 }
 
 impl IntoResponse for ContributeReceipt {

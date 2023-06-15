@@ -20,6 +20,7 @@ default = ["sqlite"]
 mimalloc = ["cli-batteries/mimalloc"]
 postgres = ["sqlx/postgres"]
 sqlite = ["sqlx/sqlite"]
+halo2 = ["kzg-ceremony-crypto/halo2"]
 
 # Dummy lib target so we can run doc tests
 [lib]
