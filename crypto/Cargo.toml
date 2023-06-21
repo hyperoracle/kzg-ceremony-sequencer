@@ -48,8 +48,8 @@ strum = { version = "0.24.1", features = ["derive"] }
 thiserror = "1.0.34"
 tracing = "0.1.36"
 zeroize = "1.5.7"
-kzg_ceremony_circuit = { path = "../../kzg_ceremony_halo2/lib/kzg_ceremony_circuit"}
-kzg_ceremony_prover = { path = "../../kzg_ceremony_halo2/lib/kzg_ceremony_prover"}
+kzg_ceremony_circuit = { git = "https://github.com/hyperoracle/kzg_ceremony_halo2"}
+kzg_ceremony_prover= { git = "https://github.com/hyperoracle/kzg_ceremony_halo2"}
 
 [dev-dependencies]
 proptest = "1.0.0"

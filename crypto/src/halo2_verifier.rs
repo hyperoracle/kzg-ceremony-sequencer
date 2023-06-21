@@ -6,8 +6,8 @@ pub fn verify_halo2_proofs(
     new_contributions: BatchContribution,
     proofs: String,
 ) {
-    let g1_params = fs::read("g1_params.bin").expect("Read G1 params file failed");
-    let g2_params = fs::read("g2_params.bin").expect("Read G2 params file failed");
+    let g1_params = fs::read("./crypto/g1_params.bin").expect("Read G1 params file failed");
+    let g2_params = fs::read("./crypto/g2_params.bin").expect("Read G2 params file failed");
 
     verify_proofs(
         &old_contributions,

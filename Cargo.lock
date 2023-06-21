@@ -2414,6 +2414,7 @@ dependencies = [
 [[package]]
 name = "kzg_ceremony_circuit"
 version = "0.1.0"
+source = "git+https://github.com/hyperoracle/kzg_ceremony_halo2#f903c3fc6dae9d62d0e32179959c15d4b75bdb7b"
 dependencies = [
  "ark-std",
  "halo2_proofs",
@@ -2426,6 +2427,7 @@ dependencies = [
 [[package]]
 name = "kzg_ceremony_prover"
 version = "0.1.0"
+source = "git+https://github.com/hyperoracle/kzg_ceremony_halo2#f903c3fc6dae9d62d0e32179959c15d4b75bdb7b"
 dependencies = [
  "hex",
  "kzg_ceremony_circuit",
